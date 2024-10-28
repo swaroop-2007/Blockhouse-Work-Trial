@@ -10,7 +10,6 @@ class Benchmark:
         Parameters:
         data (DataFrame): A DataFrame containing market data, including top 5 bid prices and sizes. (Use bid_ask_ohlcv_data)
         """
-        # Use data with top 5 bid prices and sizes for benchmarking
         self.data = data
 
     def get_twap_trades(self, data, initial_inventory, preferred_timeframe=390):
@@ -65,7 +64,6 @@ class Benchmark:
         for step in range(min(total_steps, preferred_timeframe)):
             volume_at_step = data['volume'].iloc[step]
             
-            # Handle NaN in volume_at_step
             if pd.isna(volume_at_step):
                 volume_at_step = 0
 
@@ -95,22 +93,20 @@ class Benchmark:
         Returns:
         float: The calculated VWAP price for the current step.
         """
-        # Assumes you have best 5 bid prices and sizes in your dataset
         bid_prices = [self.data[f'bid_price_{i}'].iloc[idx] for i in range(1, 6)]
         bid_sizes = [self.data[f'bid_size_{i}'].iloc[idx] for i in range(1, 6)]
         
-        # Ensure cumulative sum stops once it reaches or exceeds 'shares'
         cumsum = 0
         weighted_sum = 0
         for price, size in zip(bid_prices, bid_sizes):
             if cumsum + size >= shares:
                 weighted_sum += price * (shares - cumsum)
-                cumsum = shares  # Stop once we've reached the target shares
+                cumsum = shares  
                 break
             weighted_sum += price * size
             cumsum += size
         
-        return weighted_sum / shares if cumsum else 0  # Return VWAP
+        return weighted_sum / shares if cumsum else 0  
 
     def compute_components(self, alpha, shares, idx):
         """
@@ -125,7 +121,7 @@ class Benchmark:
         array: A NumPy array containing the slippage and market impact for the given trade.
         """
         actual_price = self.calculate_vwap(idx, shares)
-        Slippage = (self.data['bid_price_1'] - actual_price) * shares  # Assumes bid_price is in your dataset
+        Slippage = (self.data['bid_price_1'] - actual_price) * shares  
         Market_Impact = alpha * np.sqrt(shares)
         return np.array([Slippage, Market_Impact], dtype=object)
     
@@ -142,14 +138,12 @@ class Benchmark:
         tuple: A tuple containing lists of slippage, market impact.
         """
         
-        # Initialize result lists
         slippage = []
         market_impact = []
         alpha = 4.439584265535017e-06 
         rewards = []
         shares_traded = []
 
-        # Simulate the strategy
         for idx in range(len(trades)):
             shares = trades.iloc[idx]['shares']
             reward = self.compute_components(alpha, shares, idx)
